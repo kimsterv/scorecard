@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/dlorenc/scorecard/checker"
 	"github.com/dlorenc/scorecard/checks"
@@ -166,8 +165,6 @@ func main() {
 		if err := writer.Write(csvResults); err != nil {
 			log.Fatalln("error writing record to csv:", err)
 		}
-
-		time.Sleep(3 * time.Second)
 
 		i++
 
