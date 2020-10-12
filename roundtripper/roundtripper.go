@@ -9,12 +9,15 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"golang.org/x/oauth2"
 )
 
 const GITHUB_AUTH_TOKEN = "GITHUB_AUTH_TOKEN"
+
+var mutex = &sync.Mutex{}
 
 // RateLimitRoundTripper is a rate-limit aware http.Transport for Github.
 type RateLimitRoundTripper struct {
@@ -88,15 +91,21 @@ type CachingRoundTripper struct {
 
 func (rt *CachingRoundTripper) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Check the cache
+	mutex.Lock()
 	resp, ok := rt.respCache[*r.URL]
+	mutex.Unlock()
 	if ok {
 		log.Printf("Cache hit on %s", r.URL.String())
+		mutex.Lock()
 		resp.Body = ioutil.NopCloser(bytes.NewReader(rt.bodyCache[*r.URL]))
+		mutex.Unlock()
 		return resp, nil
 	}
 
 	// Get the real value
+	mutex.Lock()
 	resp, err := rt.innerTransport.RoundTrip(r)
+	mutex.Unlock()
 	if err != nil {
 		return nil, err
 	}
@@ -109,8 +118,12 @@ func (rt *CachingRoundTripper) RoundTrip(r *http.Request) (*http.Response, error
 			return nil, err
 		}
 
+		mutex.Lock()
 		rt.respCache[*r.URL] = resp
+		mutex.Unlock()
+		mutex.Lock()
 		rt.bodyCache[*r.URL] = body
+		mutex.Unlock()
 
 		resp.Body = ioutil.NopCloser(bytes.NewReader(body))
 	}

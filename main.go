@@ -54,8 +54,8 @@ func main() {
 	// Initialize the writer
 	writer := csv.NewWriter(outputFile)
 
-	i := 1
-	for i <= 5 {
+	//i := 1
+	for /*i <= 5*/ {
 		record, err := reader.Read()
 		if err == io.EOF {
 			break
@@ -166,7 +166,7 @@ func main() {
 			log.Fatalln("error writing record to csv:", err)
 		}
 
-		i++
+		//i++
 
 	}
 
